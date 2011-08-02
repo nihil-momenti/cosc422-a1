@@ -1,3 +1,5 @@
+#ifndef MODEL_HPP
+#define MODEL_HPP
 #include <string>
 #include <vector>
 
@@ -30,3 +32,4 @@ class Model {
         std::vector <HE_face> faces;
         std::vector <HE_edge> edges;
 };
+#endif

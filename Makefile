@@ -1,24 +1,26 @@
 CC = g++
 
-CPPFLAGS += -Wall -pedantic
+ORIGINAL_FLAGS := $(CPPFLAGS)
+CPPFLAGS = -Wall -pedantic
 CPPFLAGS += -O3
 CPPFLAGS += -MD -MP -MF .dep/$(subst /,-,$@).d
 CPPFLAGS += $(shell pkg-config --cflags gl glu glut)
+CPPFLAGS += $(ORIGINAL_FLAGS)
 
 LDFLAGS += $(shell pkg-config --libs gl glu glut)
 
+###############################################################################
+
+C_FILES = $(wildcard src/*.cpp)
+OBJECTS = $(C_FILES:.cpp=.o)
+
+###############################################################################
 
 all: build .dep basic
-
-
 rebuild: clean all
 
 
-.dep build:
-	mkdir $@
-
-
-basic: build/model.o build/main.o
+basic: $(OBJECTS:src/%=build/%)
 	$(CC) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 
@@ -31,5 +33,12 @@ clean:
 	rm -rf .dep/*
 
 
+build:
+	mkdir $@
+
+
 .PRECIOUS: build/%.o
 .PHONY: all rebuild clean
+
+# Include the dependency files, should be the last of the makefile
+-include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
