@@ -7,6 +7,7 @@ struct HE_edge {
   int vert; 
   int face; 
   int next; 
+  int prev;
   int pair;
 };
 

@@ -33,7 +33,7 @@ Model::Model(string filename) {
         verts[i].x = vx;
         verts[i].y = vy;
         verts[i].z = vz;
-        verts[i].edge = NULL;
+        verts[i].edge = -1;
     }
 
     number_edges = number_faces * 3;
@@ -52,18 +52,21 @@ Model::Model(string filename) {
 
         edges[j].vert = k2;
         edges[j].next = j+1;
+        edges[j].prev = j+2;
         edges[j].face = i;
-        edges[i].pair = NULL;
+        edges[i].pair = -1;
 
         edges[j+1].vert = k3;
         edges[j+1].next = j+2;
+        edges[j+1].prev = j;
         edges[j+1].face = i;
-        edges[i+1].pair = NULL;
+        edges[i+1].pair = -1;
 
         edges[j+2].vert = k1;
         edges[j+2].next = j;
+        edges[j+2].prev = j+1;
         edges[j+2].face = i;
-        edges[j+2].pair = NULL;
+        edges[j+2].pair = -1;
 
         faces[i].edge = j;
     }
@@ -71,6 +74,18 @@ Model::Model(string filename) {
     fp_in.close();
 
     cout << " File successfully read." << endl;
+
+    for (int i = 0; i < number_edges; i++) {
+        if (edges[i].pair == -1) {
+            for (int j = i+1; j < number_edges; j++) {
+                if (edges[j].vert == edges[edges[i].prev].vert && edges[edges[j].prev].vert == edges[i].vert) {
+                    edges[i].pair = j;
+                    edges[j].pair = i;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void Model::display() {
