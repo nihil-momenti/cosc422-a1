@@ -2,6 +2,9 @@
 
 #include <GL/glut.h>
 
+#include "player.hpp"
+#include "model.hpp"
+
 static Model  view_model;
 static double view_fov,
               view_near,
@@ -9,34 +12,39 @@ static double view_fov,
               view_aspect;
 
 static int view_height,
-           view_width,
-           view_bcull;
+           view_width;
+
+static bool view_bcull;
 
 int get_view_height() { return view_height; }
 int get_view_width() { return view_width; }
 
 void view_init(int argc, char *argv[]) {
     view_model = Model("models/camel.off");
+
     view_fov = 50.0;
-    view_near = 1.0;
-    view_far = 1000.0;
+    view_near = 0.1;
+    view_far = 100.0;
+
+    view_bcull = false;
+
     view_aspect = 0.0;
     view_height = 0;
     view_width = 0;
 
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
-    glutInitWindowSize(311, 496);
-    glutInitWindowPosition(0, 0);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitWindowSize(800, 800);
+    glutInitWindowPosition(10, 10);
     glutCreateWindow("Assignment 1, Wim Looman");
+
     glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
     glutIgnoreKeyRepeat(1);
 
-    glClearColor( 0.95, 0.95, 0.95, 1.0 );
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);         
+    glClearDepth(1.0f);          
+    glEnable(GL_DEPTH_TEST);  
     glEnable(GL_NORMALIZE);
-    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 }
 
 void view_reshape(int new_width, int new_height) {
@@ -47,6 +55,8 @@ void view_reshape(int new_width, int new_height) {
 }
 
 void view_display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(view_fov, view_aspect, view_near, view_far);
@@ -54,6 +64,7 @@ void view_display() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     player_look();
+    //gluLookAt(0.,0.,3.,0.,0.,0.,0.,1.,0.);
 
     if (view_bcull) {
         glEnable(GL_CULL_FACE);
@@ -67,12 +78,12 @@ void view_display() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glColor3f(1.0, 0.0, 0.0);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
     view_model.display();
 
     glFlush();
     glutSwapBuffers();
 }
+
 void view_toggle_bcull() {
-    view_bcull = (view_bcull+1)%2;
+    view_bcull = !view_bcull;
 }

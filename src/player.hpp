@@ -1,11 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include <set>
-
-#include <time.h>
-
-#include "geom.hpp"
+#include <algorithm>
 
 typedef enum {
     FORWARD,
@@ -16,6 +12,7 @@ typedef enum {
     DOWN
 } Direction;
 
+void player_init();
 void player_move(Direction);
 void player_stop(Direction);
 void player_turn(std::pair<double,double>);

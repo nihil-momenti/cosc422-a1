@@ -23,6 +23,10 @@ Vector Point::operator- (const Point& other) {
     return Vector(x - other.x, y - other.y, z - other.z);
 }
 
+std::ostream& operator<< (std::ostream& o, const Point& point) {
+    return o << "(" << point.x << ", " << point.y << ", " << point.z << ")";
+}
+
 
 
 double Vector::length() {

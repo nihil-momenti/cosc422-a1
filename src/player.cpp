@@ -1,9 +1,15 @@
+#include "player.hpp"
+
 #include <algorithm>
+#include <set>
 
 #include <GL/glut.h>
 #include <math.h>
+#include <time.h>
+#include <iostream>
 
-#include "player.hpp"
+#include "geom.hpp"
+
 
 #define PI 3.1415926535897932384626433832795
 
@@ -23,11 +29,11 @@ static void player_right(double);
 static void player_up(double);
 
 void player_init() {
-    player_position = Point(0,0,0);
-    player_lookat = Point(1,0,0);
+    player_position = Point(0,0,3);
+    player_lookat = Point(0,0,2);
     player_viewup = Vector(0,1,0);
-    player_sensitivity =10;
-    player_speed = 100;
+    player_sensitivity = 1;
+    player_speed = 0.02;
     player_in_motion = false;
 }
 
@@ -40,7 +46,7 @@ void player_move(Direction direction) {
 
     if (! player_in_motion) {
         player_in_motion = true;
-        player_update_time = time(NULL);
+        player_update_time = (clock()/(double)CLOCKS_PER_SEC);
         player_update();
     }
 }
@@ -55,34 +61,42 @@ void player_update(int value) {
         return;
     }
 
+    std::cout << "original: " << player_position << " " << player_lookat << "\n";
+
     for (std::set<Direction>::iterator it = player_moving.begin(); it != player_moving.end(); it++) {
         switch (*it) {
             case FORWARD:
-                player_forward(player_speed * (time(NULL) - player_update_time));
+                player_forward(player_speed * ((clock()/(double)CLOCKS_PER_SEC) - player_update_time));
                 break;
             case BACK:
-                player_forward(-player_speed * (time(NULL) - player_update_time));
+                player_forward(-player_speed * ((clock()/(double)CLOCKS_PER_SEC) - player_update_time));
                 break;
             case RIGHT:
-                player_right(player_speed * (time(NULL) - player_update_time));
+                player_right(player_speed * ((clock()/(double)CLOCKS_PER_SEC) - player_update_time));
                 break;
             case LEFT:
-                player_right(-player_speed * (time(NULL) - player_update_time));
+                player_right(-player_speed * ((clock()/(double)CLOCKS_PER_SEC) - player_update_time));
                 break;
             case UP:
-                player_up(player_speed * (time(NULL) - player_update_time));
+                player_up(player_speed * ((clock()/(double)CLOCKS_PER_SEC) - player_update_time));
                 break;
             case DOWN:
-                player_up(-player_speed * (time(NULL) - player_update_time));
+                player_up(-player_speed * ((clock()/(double)CLOCKS_PER_SEC) - player_update_time));
                 break;
         }
     }
 
-    player_update_time = time(NULL);
+    std::cout << "new: " << player_position << " " << player_lookat << "\n";
+
+    player_update_time = (clock()/(double)CLOCKS_PER_SEC);
     glutTimerFunc(10, player_update, 0);
 }
 
 void player_look() {
+    //std::cout
+    //        << "(" << player_position.x << "," << player_position.y << "," << player_position.z << ") "
+    //        << "(" << player_lookat.x << "," << player_lookat.y << "," << player_lookat.z << ") "
+    //        << "(" << player_viewup.dx << "," << player_viewup.dy << "," << player_viewup.dz << ")\n";
     gluLookAt(
             player_position.x, player_position.y, player_position.z,
             player_lookat.x, player_lookat.y, player_lookat.z,
@@ -104,14 +118,14 @@ static void player_forward(double amount) {
 static void player_right(double amount) {
     Vector movement = amount * player_facing().cross(player_viewup).unit();
     player_position = player_position + movement;
-    player_lookat = player_position + movement;
+    player_lookat = player_lookat + movement;
     glutPostRedisplay();
 }
 
 static void player_up(double amount) {
     Vector movement = amount * player_viewup;
     player_position = player_position + movement;
-    player_lookat = player_position + movement;
+    player_lookat = player_lookat + movement;
     glutPostRedisplay();
 }
 
@@ -124,13 +138,18 @@ void player_turn(std::pair<double,double> rotation) {
 
     double r = sqrt(x*x + y*y + z*z);
 
+    //std::cout << "original: " << "(" << x << "," << y << "," << z << ")\n";
+    //std::cout << "change: " << rotation.first << "," << rotation.second << "\n";
+
     double theta = std::max(0.01, std::min(PI - 0.01, acos(y / r) + player_sensitivity * rotation.second));
     double phi = atan2(z, x) + player_sensitivity * rotation.first;
 
-    x = r * sin(theta);
+    x = r * sin(theta) * cos(phi);
     y = r * cos(theta);
     z = r * sin(theta) * sin(phi);
 
-    player_lookat = player_position + Vector(x, y, z);
+    //std::cout << "new: " << "(" << x << "," << y << "," << z << ")\n";
+
+    player_lookat = player_position + Vector(x, y, z).unit();
     glutPostRedisplay();
 }

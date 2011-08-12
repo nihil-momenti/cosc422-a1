@@ -1,7 +1,11 @@
 #include "controller.hpp"
 
+#include <algorithm>
+
+#include "view.hpp"
+#include "player.hpp"
+
 static std::pair<double,double> mouse_pos;
-static std::pair<double,double> mouse_initial_pos;
 static int left_button_state;
 
 static void controller_display();
@@ -12,6 +16,7 @@ static void controller_keyboardFunc(unsigned char,int,int);
 static void controller_keyboardUpFunc(unsigned char,int,int);
 
 void controller_init(int argc, char *argv[]) {
+    player_init();
     view_init(argc, argv);
     mouse_pos = std::pair<double,double>(0,0);
     left_button_state = GLUT_UP;
@@ -33,6 +38,7 @@ void controller_reshape(int a, int b) {
 }
 
 void controller_mouseButtonFunc(int button, int state, int x, int y) {
+    static std::pair<double,double> mouse_initial_pos;
     if (button == GLUT_LEFT_BUTTON) {
         mouse_pos = std::pair<int,int>(x, y);
         left_button_state = state;
@@ -49,8 +55,8 @@ void controller_mouseButtonFunc(int button, int state, int x, int y) {
 void controller_mouseMotionFunc(int x, int y) {
     if (left_button_state == GLUT_DOWN) {
         std::pair<double,double> rotation = std::pair<double,double>(
-            x - mouse_pos.first / (double) get_view_width(),
-            y - mouse_pos.second / (double) get_view_height()
+            (x - mouse_pos.first) / (double) get_view_width(),
+            (y - mouse_pos.second) / (double) get_view_height()
         );
         
         player_turn(rotation);
@@ -90,6 +96,12 @@ void controller_keyboardFunc(unsigned char key, int x, int y){
         case 'd':
             player_move(RIGHT);
             break;
+        case ' ':
+            player_move(UP);
+            break;
+        case 'z':
+            player_move(DOWN);
+            break;
         case 'b':
             view_toggle_bcull();
             glutPostRedisplay();
@@ -110,6 +122,12 @@ void controller_keyboardUpFunc(unsigned char key, int x, int y){
             break;
         case 'd':
             player_stop(RIGHT);
+            break;
+        case ' ':
+            player_stop(UP);
+            break;
+        case 'z':
+            player_stop(DOWN);
             break;
     }
 }

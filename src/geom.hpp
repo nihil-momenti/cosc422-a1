@@ -1,6 +1,8 @@
 #ifndef GEOM_HPP
 #define GEOM_HPP
 
+#include <iostream>
+
 struct Vector;
 
 struct Point {
@@ -25,6 +27,8 @@ struct Point {
     Point operator- (const Vector& other);
 
     Vector operator- (const Point& other);
+
+    friend std::ostream& operator<< (std::ostream& o, const Point& point);
 };
 
 struct Vector {
@@ -55,6 +59,8 @@ struct Vector {
 
     Vector operator* (double other);
     Vector operator/ (double other);
+
+    friend std::ostream& operator<< (std::ostream& o, const Vector& vector);
 };
 
 inline Vector operator- (const Vector& v) {
