@@ -61,8 +61,6 @@ void player_update(int value) {
         return;
     }
 
-    std::cout << "original: " << player_position << " " << player_lookat << "\n";
-
     for (std::set<Direction>::iterator it = player_moving.begin(); it != player_moving.end(); it++) {
         switch (*it) {
             case FORWARD:
@@ -86,17 +84,11 @@ void player_update(int value) {
         }
     }
 
-    std::cout << "new: " << player_position << " " << player_lookat << "\n";
-
     player_update_time = (clock()/(double)CLOCKS_PER_SEC);
     glutTimerFunc(10, player_update, 0);
 }
 
 void player_look() {
-    //std::cout
-    //        << "(" << player_position.x << "," << player_position.y << "," << player_position.z << ") "
-    //        << "(" << player_lookat.x << "," << player_lookat.y << "," << player_lookat.z << ") "
-    //        << "(" << player_viewup.dx << "," << player_viewup.dy << "," << player_viewup.dz << ")\n";
     gluLookAt(
             player_position.x, player_position.y, player_position.z,
             player_lookat.x, player_lookat.y, player_lookat.z,
@@ -138,17 +130,12 @@ void player_turn(std::pair<double,double> rotation) {
 
     double r = sqrt(x*x + y*y + z*z);
 
-    //std::cout << "original: " << "(" << x << "," << y << "," << z << ")\n";
-    //std::cout << "change: " << rotation.first << "," << rotation.second << "\n";
-
     double theta = std::max(0.01, std::min(PI - 0.01, acos(y / r) + player_sensitivity * rotation.second));
     double phi = atan2(z, x) + player_sensitivity * rotation.first;
 
     x = r * sin(theta) * cos(phi);
     y = r * cos(theta);
     z = r * sin(theta) * sin(phi);
-
-    //std::cout << "new: " << "(" << x << "," << y << "," << z << ")\n";
 
     player_lookat = player_position + Vector(x, y, z).unit();
     glutPostRedisplay();
