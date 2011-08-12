@@ -94,8 +94,8 @@ void Model::display() {
     HE_vert vert;
 
     glBegin(GL_TRIANGLES);
-    for (size_t i = 0; i < faces.size(); i++) {
-        face = faces[i];
+    for (std::vector<HE_face>::iterator it = faces.begin(); it != faces.end(); it++) {
+        face = *it;
 
         edge = edges[face.edge];
         vert = verts[edge.vert];
