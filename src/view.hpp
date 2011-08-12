@@ -1,7 +1,9 @@
 #ifndef VIEW_HPP
 #define VIEW_HPP
 
-void view_init(int argc, char *argv[]);
+#include "model.hpp"
+
+void view_init(Model *model, int argc, char *argv[]);
 void view_reshape(int new_width, int new_height);
 void view_display();
 

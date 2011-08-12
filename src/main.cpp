@@ -9,6 +9,7 @@
 
 int main(int argc, char** argv)
 {
-    controller_init(argc, argv);
+    Model model = Model("models/camel.off");
+    controller_init(&model, argc, argv);
     controller_run();
 }

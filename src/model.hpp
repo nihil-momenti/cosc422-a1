@@ -5,32 +5,55 @@
 
 #include "geom.hpp"
 
+struct HE_vert;
+struct HE_face;
+
 struct HE_edge {
-  int vert; 
-  int face; 
-  int next; 
-  int prev;
-  int pair;
+    int index;
+    HE_vert *vert;
+    HE_face *face;
+    HE_edge *next;
+    HE_edge *prev;
+    HE_edge *pair;
+    bool deleted;
 };
 
 struct HE_vert {
+    int index;
     Point point;
-    int edge;
+    HE_edge *edge;
+    bool deleted;
 };
 
 struct HE_face {
-  int edge;
+    int index;
+    HE_edge *edge;
+    bool deleted;
 };
 
 class Model {
     public:
         Model();
-        Model(std::string);
+        Model(const Model&);
+        Model(const std::string);
+
+        ~Model();
+
+        void operator=(const Model&);
+
         void display();
+        void decimate_edge();
+        void error_versus(Model&);
 
     private:
-        std::vector <HE_vert> verts;
-        std::vector <HE_face> faces;
-        std::vector <HE_edge> edges;
+        HE_vert *verts;
+        HE_face *faces;
+        HE_edge *edges;
+
+        int num_verts, num_faces, num_edges;
+
+        Vector normal(HE_face *face);
+        double edge_dec_cost(HE_edge *edge);
+        void collapse_edge(HE_edge *edge);
 };
 #endif

@@ -4,6 +4,7 @@
 
 #include "view.hpp"
 #include "player.hpp"
+#include "model.hpp"
 
 static std::pair<double,double> mouse_pos;
 static int left_button_state;
@@ -15,9 +16,13 @@ static void controller_mouseMotionFunc(int,int);
 static void controller_keyboardFunc(unsigned char,int,int);
 static void controller_keyboardUpFunc(unsigned char,int,int);
 
-void controller_init(int argc, char *argv[]) {
+static Model *controller_model;
+
+void controller_init(Model* model, int argc, char *argv[]) {
+    controller_model = model;
+
     player_init();
-    view_init(argc, argv);
+    view_init(model, argc, argv);
     mouse_pos = std::pair<double,double>(0,0);
     left_button_state = GLUT_UP;
 
@@ -106,6 +111,8 @@ void controller_keyboardFunc(unsigned char key, int x, int y){
             view_toggle_bcull();
             glutPostRedisplay();
             break;
+        case 'q':
+            controller_model->decimate_edge();
     }
 }
 

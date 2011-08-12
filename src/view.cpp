@@ -5,7 +5,6 @@
 #include "player.hpp"
 #include "model.hpp"
 
-static Model  view_model;
 static double view_fov,
               view_near,
               view_far,
@@ -16,11 +15,13 @@ static int view_height,
 
 static bool view_bcull;
 
+static Model *view_model;
+
 int get_view_height() { return view_height; }
 int get_view_width() { return view_width; }
 
-void view_init(int argc, char *argv[]) {
-    view_model = Model("models/camel.off");
+void view_init(Model* model, int argc, char *argv[]) {
+    view_model = model;
 
     view_fov = 50.0;
     view_near = 0.1;
@@ -76,9 +77,9 @@ void view_display() {
 
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glColor3f(1.0, 0.0, 0.0);
+    glColor3f(1.0,0.0,0.0);
 
-    view_model.display();
+    view_model->display();
 
     glFlush();
     glutSwapBuffers();

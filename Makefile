@@ -2,7 +2,8 @@ CC = g++
 
 ORIGINAL_FLAGS := $(CPPFLAGS)
 CPPFLAGS = -Wall -pedantic
-CPPFLAGS += -O3
+CPPFLAGS += -g
+#CPPFLAGS += -O3
 CPPFLAGS += -MD -MP -MF .dep/$(subst /,-,$@).d
 CPPFLAGS += $(shell pkg-config --cflags gl glu glut)
 CPPFLAGS += $(ORIGINAL_FLAGS)
