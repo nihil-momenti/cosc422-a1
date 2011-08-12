@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "geom.hpp"
+
 struct HE_edge {
   int vert; 
   int face; 
@@ -12,10 +14,8 @@ struct HE_edge {
 };
 
 struct HE_vert {
-  float x; 
-  float y;
-  float z;
-  int edge;
+    Point point;
+    int edge;
 };
 
 struct HE_face {

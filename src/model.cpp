@@ -30,9 +30,7 @@ Model::Model(string filename) {
 
     for (int i = 0; i < number_vertices; i++) {
         fp_in >> vx >> vy >> vz;
-        verts[i].x = vx;
-        verts[i].y = vy;
-        verts[i].z = vz;
+        verts[i].point = Point(vx,vy,vz);
         verts[i].edge = -1;
     }
 
@@ -91,23 +89,23 @@ Model::Model(string filename) {
 void Model::display() {
     HE_face face;
     HE_edge edge;
-    HE_vert vert;
+    Point point;
 
     glBegin(GL_TRIANGLES);
     for (std::vector<HE_face>::iterator it = faces.begin(); it != faces.end(); it++) {
         face = *it;
 
         edge = edges[face.edge];
-        vert = verts[edge.vert];
-        glVertex3d(vert.x, vert.y, vert.z);
+        point = verts[edge.vert].point;
+        glVertex3d(point.x, point.y, point.z);
 
         edge = edges[edge.next];
-        vert = verts[edge.vert];
-        glVertex3d(vert.x, vert.y, vert.z);
+        point = verts[edge.vert].point;
+        glVertex3d(point.x, point.y, point.z);
 
         edge = edges[edge.next];
-        vert = verts[edge.vert];
-        glVertex3d(vert.x, vert.y, vert.z);
+        point = verts[edge.vert].point;
+        glVertex3d(point.x, point.y, point.z);
     }
     glEnd();
 }
