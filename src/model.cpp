@@ -75,6 +75,7 @@ Model::Model(const std::string filename) {
         edges[j].pair = NULL;
         edges[j].deleted = false;
         edges[j].index = j;
+        edges[j].cost = -1.0;
 
         edges[j+1].vert = &verts[k2];
         verts[k2].edge = &edges[j+1];
@@ -84,6 +85,7 @@ Model::Model(const std::string filename) {
         edges[j+1].pair = NULL;
         edges[j+1].deleted = false;
         edges[j+1].index = j+1;
+        edges[j+1].cost = -1.0;
 
         edges[j+2].vert = &verts[k3];
         verts[k3].edge = &edges[j+2];
@@ -93,6 +95,7 @@ Model::Model(const std::string filename) {
         edges[j+2].pair = NULL;
         edges[j+2].deleted = false;
         edges[j+2].index = j+2;
+        edges[j+2].cost = -1.0;
 
         faces[i].edge = &edges[j];
         faces[i].deleted = false;
@@ -221,6 +224,44 @@ void Model::display() {
     glEnd();
 }
 
+std::set<HE_vert*> intersection(std::set<HE_vert*> set1, std::set<HE_vert*> set2) {
+    std::set<HE_vert*> result = std::set<HE_vert*>();
+    for (std::set<HE_vert*>::iterator it = set1.begin(); it != set1.end(); it++) {
+        if (set2.find(*it) != set2.end()) {
+            result.insert(*it);
+        }
+    }
+    return result;
+}
+
+std::set<HE_vert*> one_ring(HE_edge *edge) {
+    std::set<HE_vert*> result = std::set<HE_vert*>();
+    HE_edge *e0 = edge,
+            *e = e0;
+
+    do {
+        result.insert(e->pair->vert);
+        e = e->pair->prev;
+    } while(e != e0);
+
+    return result;
+}
+
+std::set<HE_vert*> two_ring(HE_edge *edge) {
+    std::set<HE_vert*> result = std::set<HE_vert*>();
+
+    std::set<HE_vert*> first_ring = one_ring(edge);
+
+    for (std::set<HE_vert*>::iterator it = first_ring.begin(); it != first_ring.end(); it++) {
+        std::set<HE_vert*> temp_ring = one_ring((*it)->edge);
+        for (std::set<HE_vert*>::iterator it = temp_ring.begin(); it != temp_ring.end(); it++) {
+            result.insert(*it);
+        }
+    }
+
+    return result;
+}
+
 void Model::collapse_some_edge() {
     std::cout << "Finding edge to decimate." << std::endl;
 
@@ -295,6 +336,18 @@ void Model::collapse_edge(HE_edge *edge) {
     e1->face->deleted = true;
     e2->face->deleted = true;
     q->deleted = true;
+
+
+    // Reset memoized cost on the two_ring of the new point.
+    std::set<HE_vert*> ring = two_ring(a);
+    for (std::set<HE_vert*>::iterator it = ring.begin(); it != ring.end(); it++) {
+        HE_edge *e0 = (*it)->edge,
+                *e1 = e0;
+        do {
+            e1->cost = -1.0;
+            e1 = e1->pair->prev;
+        } while (e1 != e0);
+    }
 }
 
 
@@ -308,37 +361,20 @@ Vector Model::normal(HE_face *face) {
     return (point2 - point1).cross(point3 - point1).unit();
 }
 
-std::set<HE_vert*> intersection(std::set<HE_vert*> set1, std::set<HE_vert*> set2) {
-    std::set<HE_vert*> result = std::set<HE_vert*>();
-    for (std::set<HE_vert*>::iterator it = set1.begin(); it != set1.end(); it++) {
-        if (set2.find(*it) != set2.end()) {
-            result.insert(*it);
-        }
-    }
-    return result;
-}
-
-std::set<HE_vert*> one_ring(HE_edge *edge) {
-    std::set<HE_vert*> result = std::set<HE_vert*>();
-    HE_edge *e0 = edge,
-            *e = e0;
-
-    do {
-        result.insert(e->pair->vert);
-        e = e->pair->prev;
-    } while(e != e0);
-
-    return result;
-}
-
 double Model::edge_dec_cost(HE_edge *edge) {
     if (edge->deleted) {
         return DBL_MAX;
     }
 
+    // Return memoized cost if it is set.
+    if (edge->cost > 0.0) {
+        return edge->cost;
+    }
+
     // Boundary edge
     if (edge->pair->face == NULL) {
-        return DBL_MAX;
+        edge->cost = DBL_MAX;
+        return edge->cost;
     }
 
     // Edge with any boundary vertex
@@ -346,7 +382,8 @@ double Model::edge_dec_cost(HE_edge *edge) {
     do {
         e = e->pair->prev;
         if (e->face == NULL || e->pair->face == NULL) {
-            return DBL_MAX;
+            edge->cost = DBL_MAX;
+            return edge->cost;
         }
     } while (e != e0);
 
@@ -355,13 +392,15 @@ double Model::edge_dec_cost(HE_edge *edge) {
     do {
         e = e->pair->prev;
         if (e->face == NULL || e->pair->face == NULL) {
-            return DBL_MAX;
+            edge->cost = DBL_MAX;
+            return edge->cost;
         }
     } while (e != e0);
 
     // Edge with more than two vertices in one-ring neighbourhood of end points
     if (intersection(one_ring(edge), one_ring(edge->pair)).size() > 2) {
-        return DBL_MAX;
+        edge->cost = DBL_MAX;
+        return edge->cost;
     }
     
     HE_edge *pair = edge->pair;
@@ -373,5 +412,6 @@ double Model::edge_dec_cost(HE_edge *edge) {
 
     double length = (edge->vert->point - pair->vert->point).length();
 
-    return 1.0 * angle_error + 1.0 * length;
+    edge->cost = 1.0 * angle_error + 1.0 * length;
+    return edge->cost;
 }

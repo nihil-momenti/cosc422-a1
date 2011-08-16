@@ -16,6 +16,7 @@ struct HE_edge {
     HE_edge *prev;
     HE_edge *pair;
     bool deleted;
+    double cost; // Memoized value
 };
 
 struct HE_vert {
