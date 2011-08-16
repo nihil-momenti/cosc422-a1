@@ -33,7 +33,7 @@ void player_init() {
     player_lookat = Point(0,0,2);
     player_viewup = Vector(0,1,0);
     player_sensitivity = 1;
-    player_speed = 0.02;
+    player_speed = 0.2;
     player_in_motion = false;
 }
 

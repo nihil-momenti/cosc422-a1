@@ -112,7 +112,7 @@ void controller_keyboardFunc(unsigned char key, int x, int y){
             glutPostRedisplay();
             break;
         case 'q':
-            controller_model->decimate_edge();
+            controller_model->collapse_some_edge();
     }
 }
 

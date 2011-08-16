@@ -9,7 +9,15 @@
 
 int main(int argc, char** argv)
 {
-    Model model = Model("models/camel.off");
+    std::string model_file;
+
+    if (argc > 1) {
+        model_file = std::string(argv[1]);
+    } else {
+        model_file = "models/camel.off";
+    }
+
+    Model model = Model(model_file);
     controller_init(&model, argc, argv);
     controller_run();
 }

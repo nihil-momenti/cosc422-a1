@@ -42,7 +42,7 @@ class Model {
         void operator=(const Model&);
 
         void display();
-        void decimate_edge();
+        void collapse_some_edge();
         void error_versus(Model&);
 
     private:
