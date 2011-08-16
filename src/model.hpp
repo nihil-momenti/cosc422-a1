@@ -9,7 +9,7 @@ struct HE_vert;
 struct HE_face;
 
 struct HE_edge {
-    int index;
+    unsigned int index;
     HE_vert *vert;
     HE_face *face;
     HE_edge *next;
@@ -20,14 +20,14 @@ struct HE_edge {
 };
 
 struct HE_vert {
-    int index;
+    unsigned int index;
     Point point;
     HE_edge *edge;
     bool deleted;
 };
 
 struct HE_face {
-    int index;
+    unsigned int index;
     HE_edge *edge;
     bool deleted;
 };
@@ -51,7 +51,7 @@ class Model {
         HE_face *faces;
         HE_edge *edges;
 
-        int num_verts, num_faces, num_edges;
+        unsigned int num_verts, num_faces, num_edges;
 
         Vector normal(HE_face *face);
         double edge_dec_cost(HE_edge *edge);

@@ -44,7 +44,7 @@ Model::Model(const std::string filename) {
 
     verts = new HE_vert[num_verts];
 
-    for (int i = 0; i < num_verts; i++) {
+    for (unsigned int i = 0; i < num_verts; i++) {
         fp_in >> vx >> vy >> vz;
         verts[i].point = Point(vx,vy,vz);
         verts[i].edge = NULL;
@@ -58,59 +58,41 @@ Model::Model(const std::string filename) {
     // Need extra space for boundary edges.  Requirements unknown but at most the same as the number of edges.
     edges = new HE_edge[2*num_edges];
 
-    int num, k1, k2, k3, l;
-    for (int i = 0, j = 0; i < num_faces; i++, j+=3) {
-        fp_in >> num >> k1 >> k2 >> k3;
+    unsigned int num, k[3], l;
+    for (unsigned int i = 0; i < num_faces; i++) {
+        fp_in >> num >> k[0] >> k[1] >> k[2];
 
         if (num != 3) {
             std::cout << "ERROR: Polygon with index " << i  << " is not a triangle." << std::endl;  //Not a triangle!!
             exit(1);
         }
 
-        edges[j].vert = &verts[k1];
-        verts[k1].edge = &edges[j];
-        edges[j].next = &edges[j+1];
-        edges[j].prev = &edges[j+2];
-        edges[j].face = &faces[i];
-        edges[j].pair = NULL;
-        edges[j].deleted = false;
-        edges[j].index = j;
-        edges[j].cost = -1.0;
+        for (unsigned int j = 0; j < 3; j++) {
+            edges[3*i+j].vert = &verts[k[j]];
+            verts[k[j]].edge = &edges[3*i+j];
+            edges[3*i+j].next = &edges[3*i+(j+1)%3];
+            edges[3*i+j].prev = &edges[3*i+(j+2)%3];
+            edges[3*i+j].face = &faces[i];
+            edges[3*i+j].pair = NULL;
+            edges[3*i+j].deleted = false;
+            edges[3*i+j].index = 3*i+j;
+            edges[3*i+j].cost = -1.0;
+        }
 
-        edges[j+1].vert = &verts[k2];
-        verts[k2].edge = &edges[j+1];
-        edges[j+1].next = &edges[j+2];
-        edges[j+1].prev = &edges[j];
-        edges[j+1].face = &faces[i];
-        edges[j+1].pair = NULL;
-        edges[j+1].deleted = false;
-        edges[j+1].index = j+1;
-        edges[j+1].cost = -1.0;
-
-        edges[j+2].vert = &verts[k3];
-        verts[k3].edge = &edges[j+2];
-        edges[j+2].next = &edges[j];
-        edges[j+2].prev = &edges[j+1];
-        edges[j+2].face = &faces[i];
-        edges[j+2].pair = NULL;
-        edges[j+2].deleted = false;
-        edges[j+2].index = j+2;
-        edges[j+2].cost = -1.0;
-
-        faces[i].edge = &edges[j];
+        faces[i].edge = &edges[3*i];
         faces[i].deleted = false;
         faces[i].index = i;
 
-        l = j+3;
+        l = 3*(i+1);
     }
     
     fp_in.close();
 
     std::cout << " File successfully read." << std::endl;
 
-    for (int i = 0; i < num_edges; i++) {
+    for (unsigned int i = 0; i < num_edges; i++) {
         if (edges[i].pair == NULL) {
-            for (int j = i+1; j < num_edges; j++) {
+            for (unsigned int j = i+1; j < num_edges; j++) {
                 if (edges[j].vert == edges[i].prev->vert && edges[j].prev->vert == edges[i].vert) {
                     edges[i].pair = &edges[j];
                     edges[j].pair = &edges[i];
@@ -153,7 +135,9 @@ Model::Model(const std::string filename) {
         }
     }
 
-    for (int i = 0; i < num_edges * 2; i++) {
+    std::cout << "Found all pairs." << std::endl;
+
+    for (unsigned int i = 0; i < num_edges * 2; i++) {
         if (edges[i].pair != NULL && edges[i].prev == NULL) {
             std::cout << "Found edge [" << i << "] without a prev." << std::endl;
         }
@@ -192,7 +176,7 @@ void Model::display() {
     Point point;
 
     glBegin(GL_TRIANGLES);
-    for (int i = 0; i < num_faces; i++) {
+    for (unsigned int i = 0; i < num_faces; i++) {
         face = faces[i];
 
         if (! face.deleted) {
@@ -263,14 +247,14 @@ std::set<HE_vert*> two_ring(HE_edge *edge) {
 }
 
 void Model::collapse_some_edge() {
-    std::cout << "Finding edge to decimate." << std::endl;
+    std::cout << "Finding edge to collapse." << std::endl;
 
     double start_time = clock() / (double)CLOCKS_PER_SEC;
 
     HE_edge *best_edge = &edges[0];
 
     double current_score;
-    for (int i = 1; i < num_edges; i++) {
+    for (unsigned int i = 1; i < num_edges; i++) {
         current_score = edge_dec_cost(&edges[i]);
         if (current_score < edge_dec_cost(best_edge)) {
             best_edge = &edges[i];
@@ -280,11 +264,11 @@ void Model::collapse_some_edge() {
     double time = clock() / (double)CLOCKS_PER_SEC - start_time;
 
     if (edge_dec_cost(best_edge) < DBL_MAX) {
-        std::cout << "Found edge [" << best_edge->index << "] with score [" << edge_dec_cost(best_edge) << "] to decimate in [" << time << "] seconds." << std::endl;
+        std::cout << "Found edge [" << best_edge->index << "] with score [" << edge_dec_cost(best_edge) << "] to collapse in [" << time << "] seconds." << std::endl;
         collapse_edge(best_edge);
         glutPostRedisplay();
     } else {
-        std::cout << "No edge left to decimate." << std::endl;
+        std::cout << "No edge left to collapse." << std::endl;
     }
 }
 
