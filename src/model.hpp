@@ -44,6 +44,7 @@ class Model {
 
         void display();
         void collapse_some_edge();
+        void collapse_some_edges();
         void error_versus(Model&);
 
     private:
@@ -51,7 +52,7 @@ class Model {
         HE_face *faces;
         HE_edge *edges;
 
-        unsigned int num_verts, num_faces, num_edges;
+        unsigned int num_verts, num_faces, num_edges, current_edges;
 
         Vector normal(HE_face *face);
         double edge_dec_cost(HE_edge *edge);

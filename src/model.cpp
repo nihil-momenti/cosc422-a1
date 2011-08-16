@@ -145,6 +145,8 @@ Model::Model(const std::string filename) {
             std::cout << "Found edge [" << i << "] without a next." << std::endl;
         }
     }
+
+    current_edges = num_edges;
 }
 
 Model::~Model() {
@@ -268,9 +270,29 @@ void Model::collapse_some_edge() {
     if (edge_dec_cost(best_edge) < DBL_MAX) {
         std::cout << "Found edge [" << best_edge->index << "] with score [" << edge_dec_cost(best_edge) << "] to collapse in [" << time << "] seconds." << std::endl;
         collapse_edge(best_edge);
+        current_edges -= 6;
         glutPostRedisplay();
     } else {
         std::cout << "No edge left to collapse." << std::endl;
+    }
+}
+
+static Model* model_to_collapse = NULL;
+
+void collapse_next_edge(int num_to_go) {
+    if (num_to_go == 0) {
+        model_to_collapse = NULL;
+    } else {
+        std::cout << "[" << num_to_go << "] edges left to collapse." << std::endl;
+        model_to_collapse->collapse_some_edge();
+        glutTimerFunc(50, collapse_next_edge, num_to_go - 1);
+    }
+}
+
+void Model::collapse_some_edges() {
+    if (model_to_collapse == NULL) {
+        model_to_collapse = this;
+        glutTimerFunc(50, collapse_next_edge, current_edges/8);
     }
 }
 
