@@ -55,9 +55,10 @@ Model::Model(const std::string filename) {
     num_edges = num_faces * 3;
     
     faces = new HE_face[num_faces];
-    edges = new HE_edge[num_edges];
+    // Need extra space for boundary edges.  Requirements unknown but at most the same as the number of edges.
+    edges = new HE_edge[2*num_edges];
 
-    int num, k1, k2, k3;
+    int num, k1, k2, k3, l;
     for (int i = 0, j = 0; i < num_faces; i++, j+=3) {
         fp_in >> num >> k1 >> k2 >> k3;
 
@@ -67,6 +68,7 @@ Model::Model(const std::string filename) {
         }
 
         edges[j].vert = &verts[k1];
+        verts[k1].edge = &edges[j];
         edges[j].next = &edges[j+1];
         edges[j].prev = &edges[j+2];
         edges[j].face = &faces[i];
@@ -75,6 +77,7 @@ Model::Model(const std::string filename) {
         edges[j].index = j;
 
         edges[j+1].vert = &verts[k2];
+        verts[k2].edge = &edges[j+1];
         edges[j+1].next = &edges[j+2];
         edges[j+1].prev = &edges[j];
         edges[j+1].face = &faces[i];
@@ -83,6 +86,7 @@ Model::Model(const std::string filename) {
         edges[j+1].index = j+1;
 
         edges[j+2].vert = &verts[k3];
+        verts[k3].edge = &edges[j+2];
         edges[j+2].next = &edges[j];
         edges[j+2].prev = &edges[j+1];
         edges[j+2].face = &faces[i];
@@ -93,6 +97,8 @@ Model::Model(const std::string filename) {
         faces[i].edge = &edges[j];
         faces[i].deleted = false;
         faces[i].index = i;
+
+        l = j+3;
     }
     
     fp_in.close();
@@ -108,6 +114,48 @@ Model::Model(const std::string filename) {
                     break;
                 }
             }
+            // No edge found so create a boundary edge.
+            if (edges[i].pair == NULL) {
+                edges[i].pair = &edges[l];
+
+                edges[l].vert = edges[i].prev->vert;
+
+                HE_edge *e1 = &edges[i];
+                do {
+                    e1 = e1->prev->pair;
+                } while(e1 != NULL && e1->face != NULL);
+
+                if (e1 != NULL) {
+                    edges[l].next = e1;
+                    e1->prev = &edges[l];
+                }
+
+                HE_edge *e2 = &edges[i];
+                do {
+                    e2 = e2->next->pair;
+                } while(e2 != NULL && e2->face != NULL);
+
+                if (e2 != NULL) {
+                    edges[l].prev = e2;
+                    e2->next = &edges[l];
+                }
+
+                edges[l].face = NULL;
+                edges[l].pair = &edges[i];
+                edges[l].deleted = false;
+                edges[l].index = l;
+
+                l++;
+            }
+        }
+    }
+
+    for (int i = 0; i < num_edges * 2; i++) {
+        if (edges[i].pair != NULL && edges[i].prev == NULL) {
+            std::cout << "Found edge [" << i << "] without a prev." << std::endl;
+        }
+        if (edges[i].pair != NULL && edges[i].next == NULL) {
+            std::cout << "Found edge [" << i << "] without a next." << std::endl;
         }
     }
 }
@@ -212,18 +260,6 @@ void Model::collapse_edge(HE_edge *edge) {
     HE_vert *p = e2->vert,
             *q = e1->vert;
 
-    std::cout << "Collapsing edge [" << e1->index << "] with surroundings:" << std::endl
-              << "  e1 = [" << e1->index << "]" << std::endl
-              << "  e2 = [" << e2->index << "]" << std::endl
-              << "  a  = [" << a->index  << "]" << std::endl
-              << "  b1 = [" << b1->index << "]" << std::endl
-              << "  b2 = [" << b2->index << "]" << std::endl
-              << "  c  = [" << c->index  << "]" << std::endl
-              << "  d1 = [" << d1->index << "]" << std::endl
-              << "  d2 = [" << d2->index << "]" << std::endl
-              << "  p  = [" << p->index  << "]" << std::endl
-              << "  q  = [" << q->index  << "]" << std::endl;
-
     a->prev = b2->prev;
     a->next = b2->next;
     a->face = b2->face;
@@ -237,7 +273,6 @@ void Model::collapse_edge(HE_edge *edge) {
 
     edge = d1;
     do {
-        std::cout << "Pointing edge [" << edge->index << "] at point `p`." << std::endl;
         edge = edge->pair->prev;
         edge->vert = p;
     } while (edge != b2);
@@ -254,7 +289,9 @@ void Model::collapse_edge(HE_edge *edge) {
     e1->deleted = true;
     e2->deleted = true;
     b1->deleted = true;
+    b2->deleted = true;
     d1->deleted = true;
+    d2->deleted = true;
     e1->face->deleted = true;
     e2->face->deleted = true;
     q->deleted = true;
@@ -272,12 +309,26 @@ Vector Model::normal(HE_face *face) {
 }
 
 std::set<HE_vert*> intersection(std::set<HE_vert*> set1, std::set<HE_vert*> set2) {
-    return set1;
+    std::set<HE_vert*> result = std::set<HE_vert*>();
+    for (std::set<HE_vert*>::iterator it = set1.begin(); it != set1.end(); it++) {
+        if (set2.find(*it) != set2.end()) {
+            result.insert(*it);
+        }
+    }
+    return result;
 }
 
-std::set<HE_vert*> one_ring(HE_vert *vert) {
-    std::set<HE_vert*> set = std::set<HE_vert*>();
-    return set;
+std::set<HE_vert*> one_ring(HE_edge *edge) {
+    std::set<HE_vert*> result = std::set<HE_vert*>();
+    HE_edge *e0 = edge,
+            *e = e0;
+
+    do {
+        result.insert(e->pair->vert);
+        e = e->pair->prev;
+    } while(e != e0);
+
+    return result;
 }
 
 double Model::edge_dec_cost(HE_edge *edge) {
@@ -286,22 +337,30 @@ double Model::edge_dec_cost(HE_edge *edge) {
     }
 
     // Boundary edge
-    if (edge->pair == NULL) {
+    if (edge->pair->face == NULL) {
         return DBL_MAX;
     }
 
-    // Edge with two boundary edges
-    if (edge->next->pair == NULL && edge->prev->pair == NULL) {
-        return DBL_MAX;
-    }
+    // Edge with any boundary vertex
+    HE_edge *e0 = edge, *e = e0;
+    do {
+        e = e->pair->prev;
+        if (e->face == NULL || e->pair->face == NULL) {
+            return DBL_MAX;
+        }
+    } while (e != e0);
 
-    // Edge with boundary vertices
-    if ((edge->next->pair == NULL || edge->prev->pair == NULL) || (edge->pair->next->pair == NULL || edge->pair->prev->pair == NULL)) {
-        return DBL_MAX;
-    }
+    e0 = edge->pair, e = e0;
 
-    // Edge with more than two vertices in one-ring neghoubod of end points
-    if (intersection(one_ring(edge->vert), one_ring(edge->pair->vert)).size() > 2) {
+    do {
+        e = e->pair->prev;
+        if (e->face == NULL || e->pair->face == NULL) {
+            return DBL_MAX;
+        }
+    } while (e != e0);
+
+    // Edge with more than two vertices in one-ring neighbourhood of end points
+    if (intersection(one_ring(edge), one_ring(edge->pair)).size() > 2) {
         return DBL_MAX;
     }
     
