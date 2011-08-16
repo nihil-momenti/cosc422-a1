@@ -237,6 +237,8 @@ std::set<HE_vert*> two_ring(HE_edge *edge) {
     std::set<HE_vert*> first_ring = one_ring(edge);
 
     for (std::set<HE_vert*>::iterator it = first_ring.begin(); it != first_ring.end(); it++) {
+        // std::cout << "vert is deleted? [" << (*it)->deleted << "]." << std::endl;
+        // std::cout << "edge is deleted? [" << (*it)->edge->deleted << "]." << std::endl;
         std::set<HE_vert*> temp_ring = one_ring((*it)->edge);
         for (std::set<HE_vert*>::iterator it = temp_ring.begin(); it != temp_ring.end(); it++) {
             result.insert(*it);
@@ -308,6 +310,9 @@ void Model::collapse_edge(HE_edge *edge) {
     d2->prev->next = c;
     d2->next->prev = c;
     d2->face->edge = c;
+
+    b1->vert->edge = a->pair;
+    d2->vert->edge = c;
 
     p->point = p->point + 0.5 * (q->point - p->point);
 
