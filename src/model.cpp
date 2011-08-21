@@ -225,9 +225,13 @@ std::set<HE_vert*> one_ring(HE_edge *edge) {
     HE_edge *e0 = edge,
             *e = e0;
 
+    std::cout << "Starting one_ring at [" << edge->index << "]" << std::endl;
+
     do {
         result.insert(e->pair->vert);
         e = e->pair->prev;
+        std::cout << "Moving around on_ring to [" << e->index << "]" << std::endl;
+        if (e->deleted) std::cout << "Deleted edge [" << e->index << "] in one-ring." << std::endl;
     } while(e != e0);
 
     return result;
@@ -243,6 +247,7 @@ std::set<HE_vert*> two_ring(HE_edge *edge) {
         // std::cout << "edge is deleted? [" << (*it)->edge->deleted << "]." << std::endl;
         std::set<HE_vert*> temp_ring = one_ring((*it)->edge);
         for (std::set<HE_vert*>::iterator it = temp_ring.begin(); it != temp_ring.end(); it++) {
+            if ((*it)->deleted) std::cout << "Deleted vert [" << (*it)->index << "] in two-ring." << std::endl;
             result.insert(*it);
         }
     }
@@ -251,7 +256,7 @@ std::set<HE_vert*> two_ring(HE_edge *edge) {
 }
 
 void Model::collapse_some_edge() {
-    std::cout << "Finding edge to collapse." << std::endl;
+    //std::cout << "Finding edge to collapse." << std::endl;
 
     double start_time = clock() / (double)CLOCKS_PER_SEC;
 
@@ -268,7 +273,7 @@ void Model::collapse_some_edge() {
     double time = clock() / (double)CLOCKS_PER_SEC - start_time;
 
     if (edge_dec_cost(best_edge) < DBL_MAX) {
-        std::cout << "Found edge [" << best_edge->index << "] with score [" << edge_dec_cost(best_edge) << "] to collapse in [" << time << "] seconds." << std::endl;
+        //std::cout << "Found edge [" << best_edge->index << "] with score [" << edge_dec_cost(best_edge) << "] to collapse in [" << time << "] seconds." << std::endl;
         collapse_edge(best_edge);
         current_edges -= 6;
         glutPostRedisplay();
@@ -309,10 +314,32 @@ void Model::collapse_edge(HE_edge *edge) {
     HE_vert *p = e2->vert,
             *q = e1->vert;
 
+    std::cout << "e1 [" << e1->index << "]" << std::endl
+              << "e2 [" << e2->index << "]" << std::endl
+              << "a  [" << a->index << "]" << std::endl
+              << "b1 [" << b1->index << "]" << std::endl
+              << "b2 [" << b2->index << "]" << std::endl
+              << "c  [" << c->index << "]" << std::endl
+              << "d1 [" << d1->index << "]" << std::endl
+              << "d2 [" << d2->index << "]" << std::endl
+              << "p  [" << p->index << "]" << std::endl
+              << "q  [" << q->index << "]" << std::endl
+              << "f  [" << a->pair->index << "]" << std::endl
+              << "g  [" << a->pair->next->index << "]" << std::endl
+              << "h  [" << a->pair->prev->index << "]" << std::endl
+              << "i  [" << c->pair->index << "]" << std::endl
+              << "j  [" << c->pair->next->index << "]" << std::endl
+              << "j->pair  [" << c->pair->next->pair->index << "]" << std::endl
+              << "k  [" << c->pair->prev->index << "]" << std::endl
+              << "x  [" << d2->prev->index << "]" << std::endl;
+
+
     a->prev = b2->prev;
     a->next = b2->next;
+    if (b2->next == d2) a->next = c;
     a->face = b2->face;
     c->prev = d2->prev;
+    if (d2->prev == b2) c->prev = a;
     c->next = d2->next;
     c->face = d2->face;
 
@@ -326,12 +353,8 @@ void Model::collapse_edge(HE_edge *edge) {
         edge->vert = p;
     } while (edge != b2);
 
-    b2->prev->next = a;
-    b2->next->prev = a;
-    b2->face->edge = a;
-    d2->prev->next = c;
-    d2->next->prev = c;
-    d2->face->edge = c;
+    b2->prev->next = a; b2->next->prev = a; b2->face->edge = a;
+    d2->prev->next = c; d2->next->prev = c; d2->face->edge = c;
 
     b1->vert->edge = a->pair;
     d2->vert->edge = c;
@@ -409,6 +432,7 @@ double Model::edge_dec_cost(HE_edge *edge) {
     } while (e != e0);
 
     // Edge with more than two vertices in one-ring neighbourhood of end points
+    std::cout << "Intersection contains [" << intersection(one_ring(edge), one_ring(edge->pair)).size() << "] vertices." << std::endl;
     if (intersection(one_ring(edge), one_ring(edge->pair)).size() > 2) {
         edge->cost = DBL_MAX;
         return edge->cost;

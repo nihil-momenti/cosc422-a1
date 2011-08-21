@@ -1,0 +1,8 @@
+Controls
+========
+
+Hold down the left mouse button and use the mouse to look around.  Use AWSD to
+move the viewpoint, along with Z and the spacebar for up and down.
+
+Hit B to toggle back-culling of the polygons, X to collapse one edge and Q to
+start a round of edge collapse.

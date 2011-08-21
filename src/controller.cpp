@@ -113,6 +113,8 @@ void controller_keyboardFunc(unsigned char key, int x, int y){
             break;
         case 'q':
             controller_model->collapse_some_edges();
+        case 'x':
+            controller_model->collapse_some_edge();
     }
 }
 
