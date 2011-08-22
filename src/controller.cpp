@@ -111,10 +111,31 @@ void controller_keyboardFunc(unsigned char key, int x, int y){
             view_toggle_bcull();
             glutPostRedisplay();
             break;
+        case 'e':
+            view_toggle_wireframe();
+            glutPostRedisplay();
+            break;
+        case 'r':
+            view_toggle_orig_wireframe();
+            glutPostRedisplay();
+            break;
         case 'q':
             controller_model->collapse_some_edges();
+            break;
         case 'x':
             controller_model->collapse_some_edge();
+            break;
+        case 'f':
+            controller_model->toggle_error_metric();
+            break;
+        case 't':
+            view_toggle_original();
+            glutPostRedisplay();
+            break;
+        case 'p':
+            view_reset();
+            glutPostRedisplay();
+            break;
     }
 }
 

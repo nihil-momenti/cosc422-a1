@@ -28,7 +28,6 @@ basic: $(OBJECTS:src/%=build/%)
 build/%.o: src/%.cpp
 	$(CC) $(CPPFLAGS) -o $@ -c $<
 
-
 clean:
 	rm -rf build/*
 	rm -rf .dep/*

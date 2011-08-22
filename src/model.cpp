@@ -8,14 +8,19 @@
 
 #include "model.hpp"
 
+double edge_dec_cost(HE_edge *edge, ErrorMetric errorMetric);
+
 Model::Model() {
     num_verts = num_faces = num_edges = -1;
     verts = NULL;
     faces = NULL;
     edges = NULL;
+    errorMetric = SIMPLE_ERROR_METRIC;
 }
 
 Model::Model(const Model& other) {
+    errorMetric = other.errorMetric;
+
     num_verts = other.num_verts;
     num_faces = other.num_faces;
     num_edges = other.num_edges;
@@ -30,6 +35,7 @@ Model::Model(const Model& other) {
 }
 
 Model::Model(const std::string filename) {
+    errorMetric = SIMPLE_ERROR_METRIC;
     std::ifstream fp_in;
     float vx,vy,vz;
 
@@ -135,9 +141,12 @@ Model::Model(const std::string filename) {
         }
     }
 
+    std::cout << "Found [" << l - num_edges << "] boundary edges." << std::endl;
+    num_edges = l;
+
     std::cout << "Found all pairs." << std::endl;
 
-    for (unsigned int i = 0; i < num_edges * 2; i++) {
+    for (unsigned int i = 0; i < num_edges; i++) {
         if (edges[i].pair != NULL && edges[i].prev == NULL) {
             //std::cout << "Found edge [" << i << "] without a prev." << std::endl;
         }
@@ -145,8 +154,6 @@ Model::Model(const std::string filename) {
             //std::cout << "Found edge [" << i << "] without a next." << std::endl;
         }
     }
-
-    current_edges = num_edges;
 }
 
 Model::~Model() {
@@ -159,6 +166,8 @@ void Model::operator=(const Model& other) {
     delete[] faces;
     delete[] edges;
 
+    errorMetric = other.errorMetric;
+
     num_verts = other.num_verts;
     num_faces = other.num_faces;
     num_edges = other.num_edges;
@@ -170,6 +179,24 @@ void Model::operator=(const Model& other) {
     std::copy(other.verts, other.verts + num_verts, verts);
     std::copy(other.faces, other.faces + num_faces, faces);
     std::copy(other.edges, other.edges + num_edges, edges);
+    
+    // Translate the internal indexing into these arrays.
+    for (unsigned int i = 0; i < num_verts; i++) {
+        verts[i].edge = verts[i].edge - other.edges + edges;
+    }
+    for (unsigned int i = 0; i < num_faces; i++) {
+        faces[i].edge = faces[i].edge - other.edges + edges;
+    }
+    for (unsigned int i = 0; i < num_edges; i++) {
+        edges[i].vert = edges[i].vert - other.verts + verts;
+        // Special case NULL == no face
+        if (edges[i].face != NULL) {
+            edges[i].face = edges[i].face - other.faces + faces;
+        }
+        edges[i].next = edges[i].next - other.edges + edges;
+        edges[i].prev = edges[i].prev - other.edges + edges;
+        edges[i].pair = edges[i].pair - other.edges + edges;
+    }
 }
 
 void Model::display() {
@@ -177,17 +204,21 @@ void Model::display() {
     HE_edge *edge;
     Point point;
 
+    unsigned int count = 0;
     glBegin(GL_TRIANGLES);
     for (unsigned int i = 0; i < num_faces; i++) {
         face = faces[i];
 
         if (! face.deleted) {
+            count++;
             edge = face.edge;
+            Vector normal = (edge->next->vert->point - edge->vert->point).cross(edge->prev->vert->point - edge->vert->point);
             if (edge->deleted)
                 std::cout << "Deleted edge [" << edge->index << "] printed as part of face [" << face.index << "]." << std::endl;
             if (edge->vert->deleted)
                 std::cout << "Deleted vertex [" << edge->vert->index << "] printed from edge [" << edge->index << "] as part of face [" << face.index << "]." << std::endl;
             point = edge->vert->point;
+            glNormal3d(normal.dx, normal.dy, normal.dz);
             glVertex3d(point.x, point.y, point.z);
 
             edge = edge->next;
@@ -196,6 +227,7 @@ void Model::display() {
             if (edge->vert->deleted)
                 std::cout << "Deleted vertex [" << edge->vert->index << "] printed from edge [" << edge->index << "] as part of face [" << face.index << "]." << std::endl;
             point = edge->vert->point;
+            glNormal3d(normal.dx, normal.dy, normal.dz);
             glVertex3d(point.x, point.y, point.z);
 
             edge = edge->next;
@@ -204,6 +236,7 @@ void Model::display() {
             if (edge->vert->deleted)
                 std::cout << "Deleted vertex [" << edge->vert->index << "] printed from edge [" << edge->index << "] as part of face [" << face.index << "]." << std::endl;
             point = edge->vert->point;
+            glNormal3d(normal.dx, normal.dy, normal.dz);
             glVertex3d(point.x, point.y, point.z);
         }
     }
@@ -255,6 +288,7 @@ std::set<HE_vert*> two_ring(HE_edge *edge) {
     return result;
 }
 
+void collapse_edge(HE_edge *edge, ErrorMetric errorMetric);
 void Model::collapse_some_edge() {
     //std::cout << "Finding edge to collapse." << std::endl;
 
@@ -264,18 +298,17 @@ void Model::collapse_some_edge() {
 
     double current_score;
     for (unsigned int i = 1; i < num_edges; i++) {
-        current_score = edge_dec_cost(&edges[i]);
-        if (current_score < edge_dec_cost(best_edge)) {
+        current_score = edge_dec_cost(&edges[i], errorMetric);
+        if (current_score < edge_dec_cost(best_edge, errorMetric)) {
             best_edge = &edges[i];
         }
     }
 
     double time = clock() / (double)CLOCKS_PER_SEC - start_time;
 
-    if (edge_dec_cost(best_edge) < DBL_MAX) {
-        //std::cout << "Found edge [" << best_edge->index << "] with score [" << edge_dec_cost(best_edge) << "] to collapse in [" << time << "] seconds." << std::endl;
-        collapse_edge(best_edge);
-        current_edges -= 6;
+    if (edge_dec_cost(best_edge, errorMetric) < DBL_MAX) {
+        //std::cout << "Found edge [" << best_edge->index << "] with score [" << edge_dec_cost(best_edge,errorMetric) << "] to collapse in [" << time << "] seconds." << std::endl;
+        collapse_edge(best_edge, errorMetric);
         glutPostRedisplay();
     } else {
         std::cout << "No edge left to collapse." << std::endl;
@@ -285,23 +318,35 @@ void Model::collapse_some_edge() {
 static Model* model_to_collapse = NULL;
 
 void collapse_next_edge(int num_to_go) {
-    if (num_to_go == 0) {
+    if (num_to_go < 0) {
+        std::cout << "Collapsing finished, [" << model_to_collapse->current_faces() << "] faces left." << std::endl;
         model_to_collapse = NULL;
     } else {
-        std::cout << "[" << num_to_go << "] edges left to collapse." << std::endl;
+        //std::cout << "[" << num_to_go << "] edges left to collapse." << std::endl;
         model_to_collapse->collapse_some_edge();
-        glutTimerFunc(50, collapse_next_edge, num_to_go - 1);
+        glutTimerFunc(50, collapse_next_edge, num_to_go - 2);
     }
+}
+
+unsigned int Model::current_faces() {
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < num_faces; i++) {
+        if (! faces[i].deleted) {
+            count++;
+        }
+    }
+    return count;
 }
 
 void Model::collapse_some_edges() {
     if (model_to_collapse == NULL) {
         model_to_collapse = this;
-        glutTimerFunc(50, collapse_next_edge, current_edges/8);
+        std::cout << "Starting collapse from [" << current_faces() << "] faces." << std::endl;
+        glutTimerFunc(50, collapse_next_edge, current_faces() / 2);
     }
 }
 
-void Model::collapse_edge(HE_edge *edge) {
+void collapse_edge(HE_edge *edge, ErrorMetric errorMetric) {
     HE_edge *e1 = edge,
             *e2 = e1->pair,
             *a  = e1->prev,
@@ -359,7 +404,14 @@ void Model::collapse_edge(HE_edge *edge) {
     b1->vert->edge = a->pair;
     d2->vert->edge = c;
 
-    p->point = p->point + 0.5 * (q->point - p->point);
+    switch (errorMetric) {
+        case SIMPLE_ERROR_METRIC:
+            p->point = p->point + 0.5 * (q->point - p->point);
+            break;
+        case BIOWARES_ERROR_METRIC:
+            // Do nothing
+            break;
+    }
 
     e1->deleted = true;
     e2->deleted = true;
@@ -372,30 +424,78 @@ void Model::collapse_edge(HE_edge *edge) {
     q->deleted = true;
 
 
-    // Reset memoized cost on the two_ring of the new point.
+    // Reset memoized cost and normal on the two_ring of the new point.
     std::set<HE_vert*> ring = two_ring(a);
     for (std::set<HE_vert*>::iterator it = ring.begin(); it != ring.end(); it++) {
         HE_edge *e0 = (*it)->edge,
                 *e1 = e0;
         do {
             e1->cost = -1.0;
+            e1->face->normal = Vector();
             e1 = e1->pair->prev;
         } while (e1 != e0);
     }
 }
 
 
-Vector Model::normal(HE_face *face) {
+Vector normal(HE_face *face) {
+    if (face->normal != Vector()) {
+        return face->normal;
+    }
+
     HE_edge *edge = face->edge;
 
     Point point1 = edge->vert->point,
           point2 = edge->next->vert->point,
           point3 = edge->prev->vert->point;
 
-    return (point2 - point1).cross(point3 - point1).unit();
+    face->normal = (point2 - point1).cross(point3 - point1).unit();
+    return face->normal;
 }
 
-double Model::edge_dec_cost(HE_edge *edge) {
+double calc_bioware(HE_edge *edge) {
+    HE_edge *pair = edge->pair;
+
+    HE_vert *v = edge->vert,
+            *u = pair->vert;
+
+    double length = (edge->vert->point - pair->vert->point).length();
+
+    double best_angle = 0;
+    HE_edge *e0 = v->edge, *e = e0;
+    do {
+        HE_face *f = e->face;
+        HE_face *u1 = edge->face,
+                *u2 = pair->face;
+        double angle1 = (1.0 - normal(f).dot(normal(u1))) / 2.0,
+               angle2 = (1.0 - normal(f).dot(normal(u2))) / 2.0;
+
+        double angle = std::min(angle1, angle2);
+
+        if (angle > best_angle) {
+            best_angle = angle;
+        }
+        e = e->pair->prev;
+    } while(e != e0);
+
+    return length * best_angle;
+}
+
+double calc_length_and_normals(HE_edge *edge) {
+    HE_edge *pair = edge->pair;
+
+    Vector m1 = normal(edge->face),
+           m2 = normal(pair->face);
+
+    double angle_error = (1.0 - m1.dot(m2)) / 2.0;
+    double length = (edge->vert->point - pair->vert->point).length();
+
+    return 1.0 * angle_error + 1.0 * length;
+}
+
+double edge_dec_cost(HE_edge *edge, ErrorMetric errorMetric) {
+    HE_edge *pair = edge->pair;
+
     if (edge->deleted) {
         return DBL_MAX;
     }
@@ -406,7 +506,7 @@ double Model::edge_dec_cost(HE_edge *edge) {
     }
 
     // Boundary edge
-    if (edge->pair->face == NULL) {
+    if (edge->face == NULL || pair->face == NULL) {
         edge->cost = DBL_MAX;
         return edge->cost;
     }
@@ -421,8 +521,7 @@ double Model::edge_dec_cost(HE_edge *edge) {
         }
     } while (e != e0);
 
-    e0 = edge->pair, e = e0;
-
+    e0 = pair, e = e0;
     do {
         e = e->pair->prev;
         if (e->face == NULL || e->pair->face == NULL) {
@@ -431,22 +530,35 @@ double Model::edge_dec_cost(HE_edge *edge) {
         }
     } while (e != e0);
 
+
     // Edge with more than two vertices in one-ring neighbourhood of end points
     //std::cout << "Intersection contains [" << intersection(one_ring(edge), one_ring(edge->pair)).size() << "] vertices." << std::endl;
-    if (intersection(one_ring(edge), one_ring(edge->pair)).size() > 2) {
+    if (intersection(one_ring(edge), one_ring(pair)).size() > 2) {
         edge->cost = DBL_MAX;
         return edge->cost;
     }
-    
-    HE_edge *pair = edge->pair;
 
-    Vector m1 = normal(edge->face),
-           m2 = normal(pair->face);
+    switch (errorMetric) {
+        case SIMPLE_ERROR_METRIC:
+            edge->cost = calc_length_and_normals(edge);
+            break;
 
-    double angle_error = (1.0 - m1.dot(m2)) / 2.0;
-
-    double length = (edge->vert->point - pair->vert->point).length();
-
-    edge->cost = 1.0 * angle_error + 1.0 * length;
+        case BIOWARES_ERROR_METRIC:
+            edge->cost = calc_bioware(edge);
+            break;
+    }
     return edge->cost;
+}
+
+void Model::toggle_error_metric() {
+    switch (errorMetric) {
+        case SIMPLE_ERROR_METRIC:
+            errorMetric = BIOWARES_ERROR_METRIC;
+            std::cout << "Changed error metric to Bioware's one." << std::endl;
+            break;
+        case BIOWARES_ERROR_METRIC:
+            errorMetric = SIMPLE_ERROR_METRIC;
+            std::cout << "Changed to simple error metric." << std::endl;
+            break;
+    }
 }

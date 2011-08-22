@@ -11,5 +11,9 @@ int get_view_height();
 int get_view_width();
 
 void view_toggle_bcull();
+void view_toggle_wireframe();
+void view_toggle_orig_wireframe();
+void view_toggle_original();
+void view_reset();
 
 #endif
