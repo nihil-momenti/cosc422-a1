@@ -1,0 +1,89 @@
+\chapter{Code Description}
+
+  \vspace{-30pt}
+  \section{Modules}
+
+    \paragraph{\texttt{geom}}
+
+      This is a rewrite of the 3D python geometry library I used last year for
+      the second COSC363 assignment.  Just simple 3D geometry stuff to make
+      working with points and vectors easier.
+
+    \vspace{-15pt}
+    \paragraph{\texttt{view}}
+
+      This module mainly takes care of the display and reshape functions and
+      setting up what display type is used for the models along with all the
+      OpenGL initialisation.
+
+    \vspace{-15pt}
+    \paragraph{\texttt{player}}
+
+      This module simply represents the cameras viewpoint and handles moving
+      this around when the movement keys or mouse are used.
+
+    \vspace{-15pt}
+    \paragraph{\texttt{controller}}
+
+      This module takes care of calling all the other initialise functions then
+      takes the input and converts it to the correct function calls.
+
+    \vspace{-15pt}
+    \paragraph{\texttt{model}}
+
+      This module is the most important part of the assignment.  It does all the
+      actual model and edge collapse processing.  Some parts should probably be
+      split out into the actual half-edge data structures but at the moment
+      they're all just dumb data-stores.
+
+  \vspace{-15pt}
+  \section{Controls}
+    
+    All keys listed below must be lowercase when pushed.
+    
+    \vspace{-15pt}
+    \paragraph{Looking}
+      
+      Hold down the left mouse button and use the mouse to look around.
+
+    \vspace{-15pt}
+    \paragraph{Navigation}
+
+      Use \emph{A}, \emph{W}, \emph{S}, \emph{D}, \emph{Z} and \emph{the
+      spacebar} to move the viewpoint left, forwards, back, right, up and down
+      respectively.
+
+    \vspace{-15pt}
+    \paragraph{Other}
+      \begin{description}
+        \setlength{\topsep}{0pt}
+        \setlength{\parskip}{0pt}
+        \setlength{\partopsep}{0pt}
+        \setlength{\parsep}{0pt}
+        \setlength{\itemsep}{0pt}
+
+        \item[B]{ Toggle back-culling of the polygons.  Mostly useful when
+        displaying in wireframe mode. }
+
+        \item[X]{ Choose a single edge and collapse it. }
+
+        \item[Q]{ Collapse edges every 50ms until only 50% of the polygons
+        remain. }
+
+        \item[E]{ Toggle showing the collapsed model in wireframe mode. }
+
+        \item[R]{ Toggle showing the original model in wireframe mode. }
+
+        \item[F]{ Toggle which error metric to use, starts at simple and changes
+        to Stan Melax's. }
+
+        \item[T]{ Toggle whether to show the original model. }
+
+        \item[P]{ Reset the collapsed model to the original. }
+
+        \item[K]{ Calculate the current smooth normals of all vertices. }
+
+        \item[L]{ Toggle whether to display the model with the pre-calculated
+        smooth normals. }
+
+      \end{description}

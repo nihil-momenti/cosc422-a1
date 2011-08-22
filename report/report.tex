@@ -1,10 +1,12 @@
-\documentclass[a4paper, 12pt, titlepage, openany]{book}
+\documentclass[a4paper, 12pt, titlepage]{report}
 \usepackage[top=1in,right=2.5cm,left=2.5cm,bottom=1in]{geometry}
 \usepackage{hyperref}
 \usepackage{fancyhdr} 
 \usepackage[numbers,square]{natbib}
 \usepackage{graphicx}
-\usepackage[Bjarne]{fncychap}
+\usepackage{amsmath}
+\usepackage{subfig}
+\usepackage[Glenn]{fncychap}
 
 \setlength{\parskip}{0.1in}
 \setlength{\parindent}{0in}
@@ -17,9 +19,6 @@
   \rhead[\helv \thepage]{\helv \thepage}
   \cfoot[]{}
   \pagestyle{fancy}
-
-    \tableofcontents
-
     \input{introduction}
     \input{algorithm}
     \input{results}

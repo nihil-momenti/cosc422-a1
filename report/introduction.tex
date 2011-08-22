@@ -1,4 +1,34 @@
 \chapter{Introduction}
 
   This report details the implementation and testing of a Mesh Simplification
-  algorithm.  The specific algorithm chosen was 
+  algorithm.  The specific algorithm chosen for simplifying the mesh was edge
+  collapse, where an edge has its two end points collapsed together into a
+  single vertex.
+
+  \section{Edge Collapse}
+
+    Edge collapse is on its face a very simple algorithm, an edge is chosen
+    based on a set of error metrics, one end point of the edge is moved halfway
+    towards the other then the edges extending from the unmoved end point are
+    updated to be connected to the moved end point.  The error metrics chosen
+    have a very large effect on how much deformation of the mesh results when
+    some fraction of the edges are collapsed, a good set of error metrics will
+    initially choose edges that are going to produce the least change in the
+    model.  The flip side of this is that the better the error metrics are the
+    longer it is likely to take to calculate.
+
+    \subsection{Error Metrics}
+
+      The simple error metric used was mainly based around two key variables.
+      The length of the edge and the angle difference between the normals of the
+      faces on each side.  The length of the edge is relevant because the longer
+      the edge the further the endpoint is going to be moved.  The difference
+      between the normals is used as an indicator of the curvature of the local
+      area, the greater the angle the more curved it is assumed that the area
+      is.  Once these are found they are simply added together.
+
+      The next error metric was based on the one described by Stan Melax
+      \cite{smelax} developed for his work at Bioware.  This also has a
+      component based on the length of the edge and one based on the local
+      curvature, however the local curvature component is based on a larger
+      area of the surface to be collapsed.

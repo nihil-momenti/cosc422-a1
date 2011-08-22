@@ -1,3 +1,13 @@
+Building and Running
+====================
+
+Building should be as simple as just running `make` in the main folder.  This
+will create the program `basic` which should be called
+
+    ./basic [path to OFF file]
+
+e.g. `./basic models/horse.off` to use the model that the report was based off.
+
 Controls
 ========
 
