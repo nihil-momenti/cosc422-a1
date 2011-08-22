@@ -136,6 +136,13 @@ void controller_keyboardFunc(unsigned char key, int x, int y){
             view_reset();
             glutPostRedisplay();
             break;
+        case 'k':
+            controller_model->calculate_normals();
+            break;
+        case 'l':
+            controller_model->toggle_normal_map_display();
+            glutPostRedisplay();
+            break;
     }
 }
 

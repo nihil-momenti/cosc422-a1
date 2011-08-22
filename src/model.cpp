@@ -16,10 +16,12 @@ Model::Model() {
     faces = NULL;
     edges = NULL;
     errorMetric = SIMPLE_ERROR_METRIC;
+    normal_map_display = false;
 }
 
 Model::Model(const Model& other) {
     errorMetric = other.errorMetric;
+    normal_map_display = other.normal_map_display;
 
     num_verts = other.num_verts;
     num_faces = other.num_faces;
@@ -36,6 +38,7 @@ Model::Model(const Model& other) {
 
 Model::Model(const std::string filename) {
     errorMetric = SIMPLE_ERROR_METRIC;
+    normal_map_display = false;
     std::ifstream fp_in;
     float vx,vy,vz;
 
@@ -167,6 +170,7 @@ void Model::operator=(const Model& other) {
     delete[] edges;
 
     errorMetric = other.errorMetric;
+    normal_map_display = other.normal_map_display;
 
     num_verts = other.num_verts;
     num_faces = other.num_faces;
@@ -205,6 +209,7 @@ void Model::display() {
     Point point;
 
     unsigned int count = 0;
+    Vector normal, flat_normal;
     glBegin(GL_TRIANGLES);
     for (unsigned int i = 0; i < num_faces; i++) {
         face = faces[i];
@@ -212,12 +217,17 @@ void Model::display() {
         if (! face.deleted) {
             count++;
             edge = face.edge;
-            Vector normal = (edge->next->vert->point - edge->vert->point).cross(edge->prev->vert->point - edge->vert->point);
             if (edge->deleted)
                 std::cout << "Deleted edge [" << edge->index << "] printed as part of face [" << face.index << "]." << std::endl;
             if (edge->vert->deleted)
                 std::cout << "Deleted vertex [" << edge->vert->index << "] printed from edge [" << edge->index << "] as part of face [" << face.index << "]." << std::endl;
             point = edge->vert->point;
+            if (normal_map_display && edge->vert->normal != Vector()) {
+                normal = edge->vert->normal;
+            } else {
+                flat_normal = (edge->next->vert->point - edge->vert->point).cross(edge->prev->vert->point - edge->vert->point);
+                normal = flat_normal;
+            }
             glNormal3d(normal.dx, normal.dy, normal.dz);
             glVertex3d(point.x, point.y, point.z);
 
@@ -227,6 +237,11 @@ void Model::display() {
             if (edge->vert->deleted)
                 std::cout << "Deleted vertex [" << edge->vert->index << "] printed from edge [" << edge->index << "] as part of face [" << face.index << "]." << std::endl;
             point = edge->vert->point;
+            if (normal_map_display && edge->vert->normal != Vector()) {
+                normal = edge->vert->normal;
+            } else {
+                normal = flat_normal;
+            }
             glNormal3d(normal.dx, normal.dy, normal.dz);
             glVertex3d(point.x, point.y, point.z);
 
@@ -236,6 +251,11 @@ void Model::display() {
             if (edge->vert->deleted)
                 std::cout << "Deleted vertex [" << edge->vert->index << "] printed from edge [" << edge->index << "] as part of face [" << face.index << "]." << std::endl;
             point = edge->vert->point;
+            if (normal_map_display && edge->vert->normal != Vector()) {
+                normal = edge->vert->normal;
+            } else {
+                normal = flat_normal;
+            }
             glNormal3d(normal.dx, normal.dy, normal.dz);
             glVertex3d(point.x, point.y, point.z);
         }
@@ -481,7 +501,7 @@ double calc_bioware(HE_edge *edge) {
     return length * best_angle;
 }
 
-double calc_length_and_normals(HE_edge *edge) {
+double calc_simple(HE_edge *edge) {
     HE_edge *pair = edge->pair;
 
     Vector m1 = normal(edge->face),
@@ -490,7 +510,7 @@ double calc_length_and_normals(HE_edge *edge) {
     double angle_error = (1.0 - m1.dot(m2)) / 2.0;
     double length = (edge->vert->point - pair->vert->point).length();
 
-    return 1.0 * angle_error + 1.0 * length;
+    return angle_error * length;
 }
 
 double edge_dec_cost(HE_edge *edge, ErrorMetric errorMetric) {
@@ -540,7 +560,7 @@ double edge_dec_cost(HE_edge *edge, ErrorMetric errorMetric) {
 
     switch (errorMetric) {
         case SIMPLE_ERROR_METRIC:
-            edge->cost = calc_length_and_normals(edge);
+            edge->cost = calc_simple(edge);
             break;
 
         case BIOWARES_ERROR_METRIC:
@@ -554,11 +574,35 @@ void Model::toggle_error_metric() {
     switch (errorMetric) {
         case SIMPLE_ERROR_METRIC:
             errorMetric = BIOWARES_ERROR_METRIC;
+            for (unsigned int i = 0; i < num_edges; i++) {
+                edges[i].cost = -1.0;
+            }
             std::cout << "Changed error metric to Bioware's one." << std::endl;
             break;
         case BIOWARES_ERROR_METRIC:
             errorMetric = SIMPLE_ERROR_METRIC;
+            for (unsigned int i = 0; i < num_edges; i++) {
+                edges[i].cost = -1.0;
+            }
             std::cout << "Changed to simple error metric." << std::endl;
             break;
     }
+}
+
+void Model::calculate_normals() {
+    for (unsigned int i = 0; i < num_verts; i++) {
+        if (! verts[i].deleted) {
+            HE_edge *e0 = verts[i].edge, *e = e0;
+            verts[i].normal = Vector(0,0,0);
+            do {
+                verts[i].normal = verts[i].normal + normal(e->face);
+                e = e->pair->prev;
+            } while(e != e0);
+            verts[i].normal = verts[i].normal.unit();
+        }
+    }
+}
+
+void Model::toggle_normal_map_display() {
+    normal_map_display = !normal_map_display;
 }

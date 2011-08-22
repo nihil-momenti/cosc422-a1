@@ -24,6 +24,7 @@ struct HE_vert {
     Point point;
     HE_edge *edge;
     bool deleted;
+    Vector normal; // The calculated normal for normal map testing.
 };
 
 struct HE_face {
@@ -54,6 +55,8 @@ class Model {
         void collapse_some_edges();
         void toggle_error_metric();
         unsigned int current_faces();
+        void calculate_normals();
+        void toggle_normal_map_display();
 
     private:
         HE_vert *verts;
@@ -63,6 +66,7 @@ class Model {
         ErrorMetric errorMetric;
 
         unsigned int num_verts, num_faces, num_edges;
+        bool normal_map_display;
 
 //        void collapse_edge(HE_edge *edge);
 };

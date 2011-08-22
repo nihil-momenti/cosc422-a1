@@ -1,8 +1,49 @@
 Controls
 ========
 
-Hold down the left mouse button and use the mouse to look around.  Use AWSD to
-move the viewpoint, along with Z and the spacebar for up and down.
+All keys listed below must be lowercase when pushed.
 
-Hit B to toggle back-culling of the polygons, X to collapse one edge and Q to
-start a round of edge collapse.
+Looking
+-------
+
+Hold down the left mouse button and use the mouse to look around.
+
+Navigation
+----------
+
+Use 'A', 'W', 'S', 'D', 'Z' and the spacebar to move the viewpoint left,
+forwards, back, right, up and down respectively.
+
+Other
+-----
+
+'B':
+  Toggle back-culling of the polygons.  Mostly useful when displaying in
+  wireframe mode.
+
+'X':
+  Choose a single edge and collapse it.
+
+'Q':
+  Collapse edges every 50ms until only 50% of the polygons remain.
+
+'E':
+  Toggle showing the collapsed model in wireframe mode.
+
+'R':
+  Toggle showing the original model in wireframe mode.
+
+'F':
+  Toggle which error metric to use, starts at simple and changes to Stan Melax's.
+
+'T':
+  Toggle whether to show the original model.
+
+'P':
+  Reset the collapsed model to the original.
+
+'K':
+  Calculate the current smooth normals of all vertices.
+
+'L':
+  Toggle whether to display the model with the pre-calculated smooth normals.
