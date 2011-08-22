@@ -1,26 +1,18 @@
 \documentclass[a4paper, 12pt, titlepage, openany]{book}
 \usepackage[top=1in,right=2.5cm,left=2.5cm,bottom=1in]{geometry}
 \usepackage{hyperref}
-\usepackage[gnu]{newtitle} 
 \usepackage{fancyhdr} 
 \usepackage[numbers,square]{natbib}
-\usepackage{booktabs}
 \usepackage{graphicx}
-
-\title{Mesh Simplification}
-\date{\today}
-\author{
-  {Wim Looman}\vspace{-0.1cm}\\
-  {\tt wgl18@uclive.ac.nz (92692734)}\vspace{0.2cm}\\
-    Department of Computer and Electrical Engineering\vspace{0.1cm}\\
-    University of Canterbury, Christchurch, New Zealand}
+\usepackage[Bjarne]{fncychap}
 
 \setlength{\parskip}{0.1in}
 \setlength{\parindent}{0in}
 \newcommand{\helv}{\fontfamily{pag}\fontseries{b}\fontsize{9}{11}\selectfont}
-\renewcommand{\chapterheadendvskip}{\vspace{0.25\baselineskip}}
 
 \begin{document}
+  \input{title}
+
   \lhead[\helv \leftmark]{\helv \leftmark}
   \rhead[\helv \thepage]{\helv \thepage}
   \cfoot[]{}
