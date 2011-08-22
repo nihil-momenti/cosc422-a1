@@ -139,10 +139,10 @@ Model::Model(const std::string filename) {
 
     for (unsigned int i = 0; i < num_edges * 2; i++) {
         if (edges[i].pair != NULL && edges[i].prev == NULL) {
-            std::cout << "Found edge [" << i << "] without a prev." << std::endl;
+            //std::cout << "Found edge [" << i << "] without a prev." << std::endl;
         }
         if (edges[i].pair != NULL && edges[i].next == NULL) {
-            std::cout << "Found edge [" << i << "] without a next." << std::endl;
+            //std::cout << "Found edge [" << i << "] without a next." << std::endl;
         }
     }
 
@@ -225,12 +225,12 @@ std::set<HE_vert*> one_ring(HE_edge *edge) {
     HE_edge *e0 = edge,
             *e = e0;
 
-    std::cout << "Starting one_ring at [" << edge->index << "]" << std::endl;
+    //std::cout << "Starting one_ring at [" << edge->index << "]" << std::endl;
 
     do {
         result.insert(e->pair->vert);
         e = e->pair->prev;
-        std::cout << "Moving around on_ring to [" << e->index << "]" << std::endl;
+        //std::cout << "Moving around on_ring to [" << e->index << "]" << std::endl;
         if (e->deleted) std::cout << "Deleted edge [" << e->index << "] in one-ring." << std::endl;
     } while(e != e0);
 
@@ -314,24 +314,24 @@ void Model::collapse_edge(HE_edge *edge) {
     HE_vert *p = e2->vert,
             *q = e1->vert;
 
-    std::cout << "e1 [" << e1->index << "]" << std::endl
-              << "e2 [" << e2->index << "]" << std::endl
-              << "a  [" << a->index << "]" << std::endl
-              << "b1 [" << b1->index << "]" << std::endl
-              << "b2 [" << b2->index << "]" << std::endl
-              << "c  [" << c->index << "]" << std::endl
-              << "d1 [" << d1->index << "]" << std::endl
-              << "d2 [" << d2->index << "]" << std::endl
-              << "p  [" << p->index << "]" << std::endl
-              << "q  [" << q->index << "]" << std::endl
-              << "f  [" << a->pair->index << "]" << std::endl
-              << "g  [" << a->pair->next->index << "]" << std::endl
-              << "h  [" << a->pair->prev->index << "]" << std::endl
-              << "i  [" << c->pair->index << "]" << std::endl
-              << "j  [" << c->pair->next->index << "]" << std::endl
-              << "j->pair  [" << c->pair->next->pair->index << "]" << std::endl
-              << "k  [" << c->pair->prev->index << "]" << std::endl
-              << "x  [" << d2->prev->index << "]" << std::endl;
+    //std::cout << "e1 [" << e1->index << "]" << std::endl
+              //<< "e2 [" << e2->index << "]" << std::endl
+              //<< "a  [" << a->index << "]" << std::endl
+              //<< "b1 [" << b1->index << "]" << std::endl
+              //<< "b2 [" << b2->index << "]" << std::endl
+              //<< "c  [" << c->index << "]" << std::endl
+              //<< "d1 [" << d1->index << "]" << std::endl
+              //<< "d2 [" << d2->index << "]" << std::endl
+              //<< "p  [" << p->index << "]" << std::endl
+              //<< "q  [" << q->index << "]" << std::endl
+              //<< "f  [" << a->pair->index << "]" << std::endl
+              //<< "g  [" << a->pair->next->index << "]" << std::endl
+              //<< "h  [" << a->pair->prev->index << "]" << std::endl
+              //<< "i  [" << c->pair->index << "]" << std::endl
+              //<< "j  [" << c->pair->next->index << "]" << std::endl
+              //<< "j->pair  [" << c->pair->next->pair->index << "]" << std::endl
+              //<< "k  [" << c->pair->prev->index << "]" << std::endl
+              //<< "x  [" << d2->prev->index << "]" << std::endl;
 
 
     a->prev = b2->prev;
@@ -432,7 +432,7 @@ double Model::edge_dec_cost(HE_edge *edge) {
     } while (e != e0);
 
     // Edge with more than two vertices in one-ring neighbourhood of end points
-    std::cout << "Intersection contains [" << intersection(one_ring(edge), one_ring(edge->pair)).size() << "] vertices." << std::endl;
+    //std::cout << "Intersection contains [" << intersection(one_ring(edge), one_ring(edge->pair)).size() << "] vertices." << std::endl;
     if (intersection(one_ring(edge), one_ring(edge->pair)).size() > 2) {
         edge->cost = DBL_MAX;
         return edge->cost;
