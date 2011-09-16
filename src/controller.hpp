@@ -1,6 +1,5 @@
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
-#include <GL/glut.h>
 
 #include "model.hpp"
 

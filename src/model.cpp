@@ -3,9 +3,9 @@
 #include <limits.h>
 #include <iostream>
 #include <fstream>
-#include <GL/gl.h>
 #include <GL/glut.h>
 #include <float.h>
+#include <time.h>
 
 #include "model.hpp"
 
